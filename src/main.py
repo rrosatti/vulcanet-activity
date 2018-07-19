@@ -113,7 +113,6 @@ class Telephony(cmd.Cmd):
                         self.transfer_call_to_operator(op2, self.calls[0])
                         # remove the call from the calls list
                         self.calls.remove(self.calls[0]) 
-                    print    
                 return
         
         # if call is not in the call_operators list, then it was just missed
