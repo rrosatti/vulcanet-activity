@@ -1,4 +1,5 @@
 import cmd
+import threading
 
 class Operator():
     id = ''
@@ -15,6 +16,15 @@ class CallOperator():
     def __init__(self, call_id, op_id):
         self.call_id = call_id
         self.op_id = op_id
+ 
+    def timeout_detection():
+        return
+
+    def start_thread():
+        return
+
+    def stop_thread():
+        return
 
 class Telephony(cmd.Cmd):
     calls = []
@@ -43,6 +53,10 @@ class Telephony(cmd.Cmd):
             self.transfer_call_to_operator(op, call_id)
             # remove call form the calls list
             self.calls.remove(call_id)
+            # start call timeout detection
+            # get the last call, which was added previously by transfer_call_to_operator()
+            call_op = self.call_operators[-1]
+            call_op.start_thread()
         else:
             print "Call ", call_id, " waiting in queue"
         
@@ -50,7 +64,7 @@ class Telephony(cmd.Cmd):
         # check if ID is valid
         if not self.is_command_ok(op_id):
             return
-        
+            
         for call_op in self.call_operators:
             if call_op.op_id == op_id:
                 op = self.get_operator(op_id)
@@ -58,6 +72,8 @@ class Telephony(cmd.Cmd):
                 if op.state == 1:
                     op.state = 2
                     print "Call ", call_op.call_id, "answered by operator ", call_op.op_id
+                    # stop the call timeout detection
+                    call_op.stop_thread()
                 else:
                     print "Operator ", op_id, " is busy at the moment."
 
@@ -75,6 +91,8 @@ class Telephony(cmd.Cmd):
                 print "Call ", call_op.call_id, " rejected by operator ", call_op.op_id
                 # remove this current call from call_operators list
                 self.call_operators.remove(call_op)
+                # stop the call timeout detection
+                call_op.stop_thread()
                 # transfer the call to the next available operator
                 op2 = self.get_available_operator()
                 if op2:
@@ -82,6 +100,8 @@ class Telephony(cmd.Cmd):
                     # if the call is in the calls list, then just remove it
                     if call_op.call_id in self.calls:
                         self.calls.remove(call_op.call_id)
+                    # start the call timeout detection
+                    call_op.start_thread()
 
                 return
     
@@ -104,6 +124,8 @@ class Telephony(cmd.Cmd):
                 
                 # remove this current call from call_operators list
                 self.call_operators.remove(call_op)
+                # stop the call timeout detection
+                call_op.stop_thread()
                 # check if there is a call waiting in the queue. If so, then transfer that call 
                 # to an available operator
                 if self.calls:
@@ -112,7 +134,10 @@ class Telephony(cmd.Cmd):
                     if op2:
                         self.transfer_call_to_operator(op2, self.calls[0])
                         # remove the call from the calls list
-                        self.calls.remove(self.calls[0]) 
+                        self.calls.remove(self.calls[0])
+                        # start the call timeout detection
+                        call_op = self.call_operators[-1]
+                        call_op.start_thread()
                 return
         
         # if call is not in the call_operators list, then it was just missed
