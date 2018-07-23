@@ -31,13 +31,13 @@ class Telephony(cmd.Cmd):
             return
         if not self.is_call_id_available(call_id):
             return
-      
+
         print "Call ", call_id, " received"
-       
-        # add call ID to the calls list 
+
+        # add call ID to the calls list
         self.calls.append(call_id)
         op = self.get_available_operator()
-        
+
         # if there's an avialable operator, then assign this call to him
         if op:
             self.transfer_call_to_operator(op, call_id)
@@ -45,12 +45,12 @@ class Telephony(cmd.Cmd):
             self.calls.remove(call_id)
         else:
             print "Call ", call_id, " waiting in queue"
-        
+
     def do_answer(self, op_id):
         # check if ID is valid
         if not self.is_command_ok(op_id):
             return
-        
+
         for call_op in self.call_operators:
             if call_op.op_id == op_id:
                 op = self.get_operator(op_id)
@@ -84,7 +84,7 @@ class Telephony(cmd.Cmd):
                         self.calls.remove(call_op.call_id)
 
                 return
-    
+
     def do_hangup(self, call_id):
         # check if ID is valid
         if not self.is_command_ok(call_id):
@@ -98,13 +98,13 @@ class Telephony(cmd.Cmd):
                     print "Call ", call_id, " missed"
                 else:
                     print "Call ", call_id, " finished and operator ", call_op.op_id, " available"
-                
+
                 # set operator state to 0 (available)
                 op.state = 0
-                
+
                 # remove this current call from call_operators list
                 self.call_operators.remove(call_op)
-                # check if there is a call waiting in the queue. If so, then transfer that call 
+                # check if there is a call waiting in the queue. If so, then transfer that call
                 # to an available operator
                 if self.calls:
                     # check operator availability
@@ -112,9 +112,9 @@ class Telephony(cmd.Cmd):
                     if op2:
                         self.transfer_call_to_operator(op2, self.calls[0])
                         # remove the call from the calls list
-                        self.calls.remove(self.calls[0]) 
+                        self.calls.remove(self.calls[0])
                 return
-        
+
         # if call is not in the call_operators list, then it was just missed
         print "Call ", call_id, " missed"
         self.calls.remove(call_id)
@@ -134,7 +134,7 @@ class Telephony(cmd.Cmd):
             print "Only one ID is allowed at a time!"
             return 0
         return 1
-    
+
     # check if the given call ID is already in the queue
     def is_call_id_available(self, id):
         if id in self.calls:
@@ -154,14 +154,14 @@ class Telephony(cmd.Cmd):
         for op in self.operators:
             if op.state == 0:
                 return op
-    
+
     # get the operator corresponding to the given ID
     def get_operator(self, id):
         for op in self.operators:
             if op.id == id:
                 return op
         print "Operator not found!"
-        return           
+        return
 
 if __name__ == '__main__':
     prompt = Telephony()
