@@ -115,9 +115,10 @@ class Telephony(cmd.Cmd):
                         self.calls.remove(self.calls[0])
                 return
 
-        # if call is not in the call_operators list, then it was just missed
-        print "Call ", call_id, " missed"
-        self.calls.remove(call_id)
+        if call_id in self.calls:
+            # if call is not in the call_operators list, then it was just missed
+            print "Call ", call_id, " missed"
+            self.calls.remove(call_id)
 
     # used to exit 'cleanly'
     def do_exit(self, *args):
