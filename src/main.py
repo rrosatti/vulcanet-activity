@@ -52,11 +52,10 @@ class Telephony(cmd.Cmd):
             return
 
         for op in self.operators:
-            if op.id == op_id:
+            if op.id == op_id and op.current_call != "":
                 # check if operator state == 1 (ringing). If so, then set it to 2 (busy)
                 if op.state == 1:
                     op.state = 2
-                    call = self.get_call(op.current_call)
                     print "Call ", op.current_call, "answered by operator ", op_id
                 else:
                     print "Operator ", op_id, " is busy at the moment."
@@ -67,21 +66,18 @@ class Telephony(cmd.Cmd):
             return
 
         for op in self.operators:
-            if op.id == op_id:
+            if op.id == op_id and op.current_call != "":
                 # set operator state to 0 (available)
                 op.state = 0
                 print "Call ", op.current_call, " rejected by operator ", op_id
+
                 # transfer the call to the next available operator
                 op2 = self.get_available_operator()
-                call = self.get_call(op.current_call)
                 current_call = op.current_call
                 op.current_call = ""
+
                 if op2:
                     self.transfer_call_to_operator(op2, current_call)
-                    # if the call is in the calls list, then just remove it
-                    call = self.get_call(current_call)
-                    if call:
-                        self.calls.remove(call)
                 return
 
     def do_hangup(self, call_id):
