@@ -1,8 +1,10 @@
 import cmd
 
 class Call():
-    def __init__(self, id=""):
+    # status: 0 - ringing | 1 - answered | 2 - missed | 3 - on_queue
+    def __init__(self, id="", status=0):
         self.id = id
+        self.status = status
 
 class Operator():
 
@@ -44,6 +46,8 @@ class Telephony(cmd.Cmd):
             # remove call form the calls list
             self.calls.remove(call)
         else:
+            # set call status to 3 (on_queue)
+            call.status = 3
             print "Call ", call_id, " waiting in queue"
 
     def do_answer(self, op_id):
@@ -56,6 +60,11 @@ class Telephony(cmd.Cmd):
                 # check if operator state == 1 (ringing). If so, then set it to 2 (busy)
                 if op.state == 1:
                     op.state = 2
+
+                    # get call and change its status to 1 (answered)
+                    call = self.get_call(op.current_call)
+                    call.status = 1
+
                     print "Call ", op.current_call, "answered by operator ", op_id
                 else:
                     print "Operator ", op_id, " is busy at the moment."
@@ -76,8 +85,15 @@ class Telephony(cmd.Cmd):
                 current_call = op.current_call
                 op.current_call = ""
 
+                # get call and set its status to 0 (ringing)
+                call = self.get_call(current_call)
+
                 if op2:
                     self.transfer_call_to_operator(op2, current_call)
+                else:
+                    # set call status to 3 (on_queue)
+                    call.status = 3
+
                 return
 
     def do_hangup(self, call_id):
@@ -158,12 +174,15 @@ class Telephony(cmd.Cmd):
                 return op
         return
 
+    # TODO: Need to change the way this function works (maybe?)
     # get the call corresponding to the given ID
     def get_call(self, id):
         for call in self.calls:
             if call.id == id:
                 return call
         return
+
+    # TODO: create a new function, to get the first call on the queue
 
 if __name__ == '__main__':
     prompt = Telephony()
