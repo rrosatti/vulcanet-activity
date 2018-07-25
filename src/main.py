@@ -1,7 +1,7 @@
 import cmd
 
 class Call():
-    # status: 0 - ringing | 1 - answered | 2 - missed | 3 - on_queue
+    # status: 0 - ringing | 1 - answered | 2 - missed | 3 - on_queue | 4 - finished
     def __init__(self, id="", status=0):
         self.id = id
         self.status = status
@@ -43,8 +43,6 @@ class Telephony(cmd.Cmd):
         # if there's an avialable operator, then assign this call to him
         if op:
             self.transfer_call_to_operator(op, call_id)
-            # remove call form the calls list
-            self.calls.remove(call)
         else:
             # set call status to 3 (on_queue)
             call.status = 3
@@ -56,18 +54,17 @@ class Telephony(cmd.Cmd):
             return
 
         for op in self.operators:
-            if op.id == op_id and op.current_call != "":
-                # check if operator state == 1 (ringing). If so, then set it to 2 (busy)
-                if op.state == 1:
-                    op.state = 2
+            # search for the given operator and if the state == 1 (ringing)
+            if op.id == op_id and op.state == 1:
+                op.state = 2
 
-                    # get call and change its status to 1 (answered)
-                    call = self.get_call(op.current_call)
-                    call.status = 1
+                # TODO: use try/except here (call could not exist)
+                # get call and change its status to 1 (answered)
+                call = self.get_call(op.current_call)
+                call.status = 1
 
-                    print "Call ", op.current_call, "answered by operator ", op_id
-                else:
-                    print "Operator ", op_id, " is busy at the moment."
+                print "Call ", op.current_call, "answered by operator ", op_id
+                return
 
     def do_reject(self, op_id):
         # check if ID is valid
@@ -101,35 +98,40 @@ class Telephony(cmd.Cmd):
         if not self.is_command_ok(call_id):
             return
 
+        # TODO: use try/except here (call could not exist)
         call = self.get_call(call_id)
 
-        for op in self.operators:
-            if op.current_call == call_id:
-                # check if operator already answered the call (state == 2 [busy])
-                if op.state != 2:
-                    print "Call ", call_id, " missed"
-                else:
-                    print "Call ", call_id, " finished and operator ", op.id, " available"
-
-                # set operator state to 0 (available)
-                op.state = 0
-                op.current_call = ""
-
-                # check if there is a call waiting in the queue. If so, then transfer that call
-                # to an available operator
-                if self.calls:
-                    # check operator availability
-                    op2 = self.get_available_operator()
-                    if op2:
-                        self.transfer_call_to_operator(op2, self.calls[0].id)
-                        # remove the call from the calls list
-                        self.calls.remove(self.calls[0])
-                return
-
-        if call:
-            # if call is not assigned to an operator yet, then it was just missed
+        # if the call status is 3 (on_queue), then just
+        # set its status to 2 (missed) and print a message
+        if call.status == 3:
+            call.status = 2
             print "Call ", call_id, " missed"
-            self.calls.remove(call)
+        else:
+            for op in self.operators:
+                if op.current_call == call_id:
+                    if op.state == 1:
+                        print "Call ", call_id, " missed"
+                        call.status = 2
+                    else:
+                        print "Call ", call_id, " finished and operator ", op.id, " available"
+                        call.status = 4
+
+                    # set operator state to 0 (available)
+                    op.state = 0
+                    op.current_call = ""
+                    break
+
+        # check if there's any call waiting on queue
+        call2 = self.get_call_on_queue()
+
+        if call2:
+            # check operator availability
+            op2 = self.get_available_operator()
+            if op2:
+                # transfer call to available operator and set the call status
+                # to 0 (ringing)
+                self.transfer_call_to_operator(op2, call2.id)
+                call2.status = 0
 
     # used to exit 'cleanly'
     def do_exit(self, *args):
@@ -174,7 +176,6 @@ class Telephony(cmd.Cmd):
                 return op
         return
 
-    # TODO: Need to change the way this function works (maybe?)
     # get the call corresponding to the given ID
     def get_call(self, id):
         for call in self.calls:
@@ -183,6 +184,10 @@ class Telephony(cmd.Cmd):
         return
 
     # TODO: create a new function, to get the first call on the queue
+    def get_call_on_queue(self):
+        for call in self.calls:
+            if call.status == 3:
+                return call
 
 if __name__ == '__main__':
     prompt = Telephony()
