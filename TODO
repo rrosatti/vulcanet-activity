@@ -6,8 +6,10 @@ The items are not in the "Order of Importance".
 * Convert code to Python 3
 * Add Unit Tests
 * Think in a better OOP approach
-* Use try/except
-* Change the way the calls are handled:
+* [STARTED] Use try/except
+* [DONE] Change the way the calls are handled:
     - Instead of removing/adding the calls on the list,
     maybe it would be better to use statuses, such as:
     ringing, answered, missed and on_queue.
+    [UPDATE] - one more status was added on the way: finished
+* Replace 'id' attribute, since 'id' is a python keyword
