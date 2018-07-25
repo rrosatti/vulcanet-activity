@@ -57,15 +57,17 @@ class Telephony(cmd.Cmd):
         for op in self.operators:
             # search for the given operator and if the state == 1 (ringing)
             if op.id == op_id and op.state == 1:
-                op.state = 2
 
-                # TODO: use try/except here (call could not exist)
-                # get call and change its status to 1 (answered)
+                # get call
                 try:
                     call = self.get_call(op.current_call)
-                except NoCallFoundException:
+                except NoCallFoundException as e:
+                    print e.msg
                     return
 
+                # set operator state to 2 (busy)
+                op.state = 2
+                # set call status to 1 (answered)
                 call.status = 1
 
                 print "Call ", op.current_call, "answered by operator ", op_id
@@ -92,6 +94,8 @@ class Telephony(cmd.Cmd):
 
                 if op2:
                     self.transfer_call_to_operator(op2, current_call)
+                    # set call status to 0 (ringing)
+                    call.status = 0
                 else:
                     # set call status to 3 (on_queue)
                     call.status = 3
@@ -103,8 +107,12 @@ class Telephony(cmd.Cmd):
         if not self.is_command_ok(call_id):
             return
 
-        # TODO: use try/except here (call could not exist)
-        call = self.get_call(call_id)
+        # get call
+        try:
+            call = self.get_call(call_id)
+        except NoCallFoundException as e:
+            print e.msg
+            return
 
         # if the call status is 3 (on_queue), then just
         # set its status to 2 (missed) and print a message
