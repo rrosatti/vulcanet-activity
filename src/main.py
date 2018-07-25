@@ -1,4 +1,5 @@
 import cmd
+from myexceptions import NoCallFoundException
 
 class Call():
     # status: 0 - ringing | 1 - answered | 2 - missed | 3 - on_queue | 4 - finished
@@ -60,7 +61,11 @@ class Telephony(cmd.Cmd):
 
                 # TODO: use try/except here (call could not exist)
                 # get call and change its status to 1 (answered)
-                call = self.get_call(op.current_call)
+                try:
+                    call = self.get_call(op.current_call)
+                except NoCallFoundException:
+                    return
+
                 call.status = 1
 
                 print "Call ", op.current_call, "answered by operator ", op_id
@@ -181,7 +186,7 @@ class Telephony(cmd.Cmd):
         for call in self.calls:
             if call.id == id:
                 return call
-        return
+        raise NoCallFoundException
 
     # TODO: create a new function, to get the first call on the queue
     def get_call_on_queue(self):
